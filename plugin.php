@@ -56,35 +56,50 @@ function display_random_quote() {
 // Register the shortcode
 add_shortcode('random_quote', 'display_random_quote');
 
-// Function to add settings page
-function random_quote_footer_settings_page() {
-    add_options_page('Random Quote Footer Settings', 'Random Quote Settings', 'manage_options', 'random-quote-footer-settings', 'random_quote_footer_settings');
+// Function to add top-level menu item
+function random_quote_footer_settings_menu() {
+    add_menu_page('Random Quote Settings', 'Random Quote', 'manage_options', 'random-quote-footer-settings', 'random_quote_footer_settings', '', 100);
 }
-add_action('admin_menu', 'random_quote_footer_settings_page');
+add_action('admin_menu', 'random_quote_footer_settings_menu');
 
-// Function to display settings page
-// Function to display settings page
+// Function to add sub-tab for settings page
 function random_quote_footer_settings() {
     ?>
     <div class="wrap">
-        <h1>Random Quote Footer Settings</h1>
-        <p>To display a random quote in the footer of your website, use the following shortcode:</p>
-        <code>[random_quote]</code>
-        <p>You can customize the color and font of the quote below:</p>
-        <form method="post" action="options.php">
-            <?php settings_fields('random_quote_footer_settings_group'); ?>
-            <table class="form-table">
-                <tr valign="top">
-                    <th scope="row">Quote Color</th>
-                    <td><input type="color" name="random_quote_color" value="<?php echo get_option('random_quote_color', '#000000'); ?>"></td>
-                </tr>
-                <tr valign="top">
-                    <th scope="row">Quote Font</th>
-                    <td><input type="text" name="random_quote_font" value="<?php echo get_option('random_quote_font', 'Arial'); ?>"></td>
-                </tr>
-            </table>
-            <?php submit_button(); ?>
-        </form>
+        <h1>Random Quote Settings</h1>
+        <h2 class="nav-tab-wrapper">
+            <a href="?page=random-quote-footer-settings" class="nav-tab nav-tab-active">General Settings</a>
+            <a href="?page=random-quote-footer-settings&tab=subtab1" class="nav-tab">Sub Tab 1</a>
+            <a href="?page=random-quote-footer-settings&tab=subtab2" class="nav-tab">Sub Tab 2</a>
+        </h2>
+        <?php
+        // Check for the current tab
+        $current_tab = isset($_GET['tab']) ? $_GET['tab'] : 'general';
+
+        // Display content based on current tab
+        if ($current_tab === 'subtab1') {
+            echo '<h2>Sub Tab 1 Content</h2>';
+        } elseif ($current_tab === 'subtab2') {
+            echo '<h2>Sub Tab 2 Content</h2>';
+        } else {
+            ?>
+            <form method="post" action="options.php">
+                <?php settings_fields('random_quote_footer_settings_group'); ?>
+                <table class="form-table">
+                    <tr valign="top">
+                        <th scope="row">Quote Color</th>
+                        <td><input type="color" name="random_quote_color" value="<?php echo get_option('random_quote_color', '#000000'); ?>"></td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row">Quote Font</th>
+                        <td><input type="text" name="random_quote_font" value="<?php echo get_option('random_quote_font', 'Arial'); ?>"></td>
+                    </tr>
+                </table>
+                <?php submit_button(); ?>
+            </form>
+            <?php
+        }
+        ?>
     </div>
     <?php
 }
