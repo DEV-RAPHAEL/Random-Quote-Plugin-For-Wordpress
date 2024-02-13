@@ -63,10 +63,14 @@ function random_quote_footer_settings_page() {
 add_action('admin_menu', 'random_quote_footer_settings_page');
 
 // Function to display settings page
+// Function to display settings page
 function random_quote_footer_settings() {
     ?>
     <div class="wrap">
-        <h1>Random Quote Settings</h1>
+        <h1>Random Quote Footer Settings</h1>
+        <p>To display a random quote in the footer of your website, use the following shortcode:</p>
+        <code>[random_quote]</code>
+        <p>You can customize the color and font of the quote below:</p>
         <form method="post" action="options.php">
             <?php settings_fields('random_quote_footer_settings_group'); ?>
             <table class="form-table">
@@ -84,6 +88,7 @@ function random_quote_footer_settings() {
     </div>
     <?php
 }
+
 
 // Function to register settings
 function random_quote_footer_register_settings() {
