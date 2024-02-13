@@ -29,8 +29,7 @@ function get_random_quote() {
         "The biggest risk is not taking any risk. In a world that's changing really quickly, the only strategy that is guaranteed to fail is not taking risks. - Mark Zuckerberg",
         "Don't wait for the perfect moment, take the moment and make it perfect. - Paulo Coelho, Author",
         "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt",
-        "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt",
-
+        "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt"
     );
 
     // Get a random index
@@ -69,7 +68,7 @@ function random_quote_footer_settings() {
         <h1>Random Quote Settings</h1>
         <h2 class="nav-tab-wrapper">
             <a href="?page=random-quote-footer-settings" class="nav-tab nav-tab-active">General Settings</a>
-            <a href="?page=random-quote-footer-settings&tab=subtab1" class="nav-tab">Sub Tab 1</a>
+            <a href="?page=random-quote-footer-settings&tab=subtab1" class="nav-tab">Manage Quotes</a>
             <a href="?page=random-quote-footer-settings&tab=subtab2" class="nav-tab">Sub Tab 2</a>
         </h2>
         <?php
@@ -78,7 +77,7 @@ function random_quote_footer_settings() {
 
         // Display content based on current tab
         if ($current_tab === 'subtab1') {
-            echo '<h2>Sub Tab 1 Content</h2>';
+            random_quote_sub_tab_1_content(); // Call function to display Sub Tab 1 content
         } elseif ($current_tab === 'subtab2') {
             echo '<h2>Sub Tab 2 Content</h2>';
         } else {
@@ -104,6 +103,115 @@ function random_quote_footer_settings() {
     <?php
 }
 
+// Function to display content for Sub Tab 1
+function random_quote_sub_tab_1_content() {
+    ?>
+    <h2>Manage Quotes</h2>
+    <table class="widefat">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Quote</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            // Get all quotes
+            $quotes = get_option('random_quotes', array());
+
+            // Loop through each quote and display in a table row
+            foreach ($quotes as $id => $quote) {
+                ?>
+                <tr>
+                    <td><?php echo $id; ?></td>
+                    <td><?php echo $quote; ?></td>
+                    <td>
+                        <a href="?page=random-quote-footer-settings&tab=subtab1&action=edit&id=<?php echo $id; ?>">Edit</a> |
+                        <a href="?page=random-quote-footer-settings&tab=subtab1&action=delete&id=<?php echo $id; ?>">Delete</a>
+                    </td>
+                </tr>
+                <?php
+            }
+            ?>
+        </tbody>
+    </table>
+
+    <h2>Add New Quote</h2>
+    <form method="post" action="?page=random-quote-footer-settings&tab=subtab1">
+        <input type="hidden" name="action" value="add">
+        <table class="form-table">
+            <tr>
+                <th scope="row">New Quote</th>
+                <td><textarea name="new_quote"></textarea></td>
+            </tr>
+        </table>
+        <?php submit_button('Add New Quote'); ?>
+    </form>
+    <?php
+}
+
+// Function to handle actions in Sub Tab 1
+function random_quote_sub_tab_1_actions() {
+    if (isset($_GET['action']) && isset($_GET['id'])) {
+        $action = $_GET['action'];
+        $id = $_GET['id'];
+
+        // Get all quotes
+        $quotes = get_option('random_quotes', array());
+
+        if ($action === 'edit') {
+            // Handle edit action
+            if (isset($quotes[$id])) {
+                // Display form to edit the quote
+                ?>
+                <h2>Edit Quote</h2>
+                <form method="post" action="?page=random-quote-footer-settings&tab=subtab1">
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="id" value="<?php echo $id; ?>">
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">Quote</th>
+                            <td><textarea name="updated_quote"><?php echo $quotes[$id]; ?></textarea></td>
+                        </tr>
+                    </table>
+                    <?php submit_button('Update Quote'); ?>
+                </form>
+                <?php
+            }
+        } elseif ($action === 'delete') {
+            // Handle delete action
+            if (isset($quotes[$id])) {
+                unset($quotes[$id]);
+                update_option('random_quotes', $quotes);
+                echo '<div class="updated"><p>Quote deleted successfully.</p></div>';
+            }
+        }
+    } elseif (isset($_POST['action'])) {
+        $action = $_POST['action'];
+
+        // Get all quotes
+        $quotes = get_option('random_quotes', array());
+
+        if ($action === 'add' && isset($_POST['new_quote'])) {
+            // Handle add new quote action
+            $new_quote = sanitize_textarea_field($_POST['new_quote']);
+            $quotes[] = $new_quote;
+            update_option('random_quotes', $quotes);
+            echo '<div class="updated"><p>New quote added successfully.</p></div>';
+        } elseif ($action === 'update' && isset($_POST['id']) && isset($_POST['updated_quote'])) {
+            // Handle update quote action
+            $id = $_POST['id'];
+            $updated_quote = sanitize_textarea_field($_POST['updated_quote']);
+            $quotes[$id] = $updated_quote;
+            update_option('random_quotes', $quotes);
+            echo '<div class="updated"><p>Quote updated successfully.</p></div>';
+        }
+    }
+}
+
+// Hook into the admin_init action to handle actions
+add_action('admin_init', 'random_quote_sub_tab_1_actions');
 
 // Function to register settings
 function random_quote_footer_register_settings() {
