@@ -30,7 +30,7 @@ function get_random_quote() {
     return $quotes[$index];
 }
 
-// Function to handle the shortcode
+// Function to handle the normal shortcode without dynamic update
 function display_random_quote() {
     $color = get_option('random_quote_color', '#000000');
     $font = get_option('random_quote_font', 'Arial');
@@ -38,8 +38,49 @@ function display_random_quote() {
     return "<blockquote style='color: $color; font-family: $font;'>{$quote['quote']}</blockquote>";
 }
 
-// Register the shortcode
+// Register the normal shortcode
 add_shortcode('random_quote', 'display_random_quote');
+
+// Function to handle the dynamic shortcode with dynamic update
+function display_random_quote_dynamic() {
+    $color = get_option('random_quote_color', '#000000');
+    $font = get_option('random_quote_font', 'Arial');
+    ?>
+    <blockquote id="random-quote" style="color: <?php echo $color; ?>; font-family: <?php echo $font; ?>"></blockquote>
+    <script>
+        // Function to fetch a new random quote from the server
+        function fetchRandomQuote() {
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>?action=get_random_quote')
+                .then(response => response.json())
+                .then(data => {
+                    const quote = data.quote;
+                    const quoteElement = document.getElementById('random-quote');
+                    // Update quote text
+                    quoteElement.innerHTML = quote;
+                })
+                .catch(error => console.error('Error fetching random quote:', error));
+        }
+
+        // Fetch a new random quote every 30 seconds
+        setInterval(fetchRandomQuote, 30000);
+
+        // Fetch a new random quote when the page is loaded
+        document.addEventListener('DOMContentLoaded', fetchRandomQuote);
+    </script>
+    <?php
+}
+
+// Register the dynamic shortcode
+add_shortcode('random_quote_dynamic', 'display_random_quote_dynamic');
+
+// AJAX handler to get a random quote
+add_action('wp_ajax_get_random_quote', 'get_random_quote_ajax');
+add_action('wp_ajax_nopriv_get_random_quote', 'get_random_quote_ajax');
+
+function get_random_quote_ajax() {
+    $quote = get_random_quote();
+    wp_send_json($quote);
+}
 
 // Function to add top-level menu item
 function random_quote_footer_settings_menu() {
@@ -47,44 +88,52 @@ function random_quote_footer_settings_menu() {
 }
 add_action('admin_menu', 'random_quote_footer_settings_menu');
 
-// Function to import demo quotes
 function import_demo_quotes() {
-    // Get the default quotes
+    // Get the default quotes (can be moved outside the function for better performance)
     $default_quotes = array(
-        // Default quotes here
         array("quote" => "A brand is the voice of a company. You have to make sure it speaks clearly and consistently. - Simon Sinek, Author & Speaker"),
-    array("quote" => "Design is intelligence made visible. - Alina Wheeler, Design Consultant"),
-    array("quote" => "Branding is the art of simplifying the idea of the business. - Marty Neumeier, Branding Expert"),
-    array("quote" => "A strong brand is like a lighthouse - it cuts through the chaos and helps people find you. - David Brier, Marketing Consultant"),
-    array("quote" => "People don't buy products, they buy stories. - Simon Sinek"),
-    array("quote" => "Websites are the ultimate brochure - always open, always accessible, and always up-to-date. - Unknown"),
-    array("quote" => "In the digital age, the best place to hide is the second page of Google search results. - Unknown"),
-    array("quote" => "Your website is your digital storefront - make it inviting, user-friendly, and conversion-focused. - Neil Patel, Marketing Expert"),
-    array("quote" => "The web is not a destination, it is a journey - make sure your website is part of the adventure. - Craig Sullivan, Google Search Quality Strategist"),
-    array("quote" => "A website is like a handshake - it creates a first impression that can make or break a deal. - Anonymous"),
-    array("quote" => "Content is king, but design is queen. Without the queen, the king is alone. - Steve Jobs"),
-    array("quote" => "Great design is both beautiful and functional - it serves a purpose while delighting the user. - Dieter Rams, Industrial Designer"),
-    array("quote" => "Design is not just how it looks and feels. It's how it works. - Steve Jobs"),
-    array("quote" => "Visuals are a powerful tool - use them to tell your story, captivate your audience, and leave a lasting impression. - Unknown"),
-    array("quote" => "Good design is like good storytelling - it resonates with emotion and inspires action. - Unknown"),
-    array("quote" => "The internet is the world's largest marketplace - be there where your customers are searching. - Bill Gates"),
-    array("quote" => "The biggest risk is not taking any risk. In a world that's changing really quickly, the only strategy that is guaranteed to fail is not taking risks. - Mark Zuckerberg"),
-    array("quote" => "Don't wait for the perfect moment, take the moment and make it perfect. - Paulo Coelho, Author"),
-    array("quote" => "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt"),
-    array("quote" => "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt"),
+        array("quote" => "Design is intelligence made visible. - Alina Wheeler, Design Consultant"),
+        array("quote" => "Branding is the art of simplifying the idea of the business. - Marty Neumeier, Branding Expert"),
+        array("quote" => "A strong brand is like a lighthouse - it cuts through the chaos and helps people find you. - David Brier, Marketing Consultant"),
+        array("quote" => "People don't buy products, they buy stories. - Simon Sinek"),
+        array("quote" => "Websites are the ultimate brochure - always open, always accessible, and always up-to-date. - Unknown"),
+        array("quote" => "In the digital age, the best place to hide is the second page of Google search results. - Unknown"),
+        array("quote" => "Your website is your digital storefront - make it inviting, user-friendly, and conversion-focused. - Neil Patel, Marketing Expert"),
+        array("quote" => "The web is not a destination, it is a journey - make sure your website is part of the adventure. - Craig Sullivan, Google Search Quality Strategist"),
+        array("quote" => "A website is like a handshake - it creates a first impression that can make or break a deal. - Anonymous"),
+        array("quote" => "Content is king, but design is queen. Without the queen, the king is alone. - Steve Jobs"),
+        array("quote" => "Great design is both beautiful and functional - it serves a purpose while delighting the user. - Dieter Rams, Industrial Designer"),
+        array("quote" => "Design is not just how it looks and feels. It's how it works. - Steve Jobs"),
+        array("quote" => "Visuals are a powerful tool - use them to tell your story, captivate your audience, and leave a lasting impression. - Unknown"),
+        array("quote" => "Good design is like good storytelling - it resonates with emotion and inspires action. - Unknown"),
+        array("quote" => "The internet is the world's largest marketplace - be there where your customers are searching. - Bill Gates"),
+        array("quote" => "The biggest risk is not taking any risk. In a world that's changing really quickly, the only strategy that is guaranteed to fail is not taking risks. - Mark Zuckerberg"),
+        array("quote" => "Don't wait for the perfect moment, take the moment and make it perfect. - Paulo Coelho, Author"),
+        array("quote" => "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt"),
+        array("quote" => "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt"),
     );
-  
+
     // Merge with existing quotes (optional)
     $existing_quotes = get_option('random_quotes', array());
     $quotes = array_merge($existing_quotes, $default_quotes);
-  
+
     // Update the option with the combined quotes
     update_option('random_quotes', $quotes);
-  
+
     // Display a success message
     echo '<div class="updated"><p>Demo quotes imported successfully.</p></div>';
+    ?>
+    <button onclick="importDemoQuotes()">Import Demo Quotes</button>
+    <script>
+      function importDemoQuotes() {
+        // Use AJAX or post request to call the function (optional)
+        // Here, we trigger the function directly for simplicity
+        import_demo_quotes();
+      }
+    </script>
+    <?php
 }
-  
+
 // Function to add sub-tab for settings page
 function random_quote_footer_settings() {
     ?>
@@ -102,8 +151,8 @@ function random_quote_footer_settings() {
         // Display content based on current tab
         if ($current_tab === 'subtab1') {
             random_quote_sub_tab_1_content(); // Call function to display Sub Tab 1 content
-        } elseif ($current_tab === 'import-demo-quotes') {
-            import_demo_quotes(); // Call function to import demo quotes
+        } elseif ($current_tab === 'subtab2') {
+            echo '<h2>Sub Tab 2 Content</h2>';
         } else {
             ?>
             <form method="post" action="options.php">
@@ -117,6 +166,18 @@ function random_quote_footer_settings() {
                         <th scope="row">Quote Font</th>
                         <td><input type="text" name="random_quote_font" value="<?php echo get_option('random_quote_font', 'Arial'); ?>"></td>
                     </tr>
+                </table>
+                <h3>Shortcodes</h3>
+                <p>Use These shortcodes to add Quotes to your site</p>
+                
+                <table>
+                    <th scope="row">Static Display</th>
+                    <code>[random_quote]</code>
+                </table>
+                <br>
+                <table>
+                    <th scope="row">Dynamic Display</th>
+                    <code>[random_quote_dynamic]</code>
                 </table>
                 <?php submit_button(); ?>
             </form>
@@ -240,17 +301,5 @@ function random_quote_footer_register_settings() {
 }
 add_action('admin_init', 'random_quote_footer_register_settings');
 
-// Activation hook
-function random_quote_plugin_activation() {
-    // Add default options if they don't exist
-    if (!get_option('random_quotes')) {
-        update_option('random_quotes', array());
-    }
-    if (!get_option('random_quote_color')) {
-        update_option('random_quote_color', '#000000');
-    }
-    if (!get_option('random_quote_font')) {
-        update_option('random_quote_font', 'Arial');
-    }
-}
+// Activation Hook
 register_activation_hook(__FILE__, 'random_quote_plugin_activation');
