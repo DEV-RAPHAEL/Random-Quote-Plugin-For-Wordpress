@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Random Quote for Digital Agencies
+Plugin Name: Random Quote on Site
 Description: Display a random quote that helps your users see why they should use your service using a shortcode with customizable color and font.
 Version: 3.0
 Author: Ajayi Raphael Temitope
@@ -88,6 +88,7 @@ function random_quote_footer_settings_menu() {
 }
 add_action('admin_menu', 'random_quote_footer_settings_menu');
 
+// Function to import demo quotes
 function import_demo_quotes() {
     // Get the default quotes (can be moved outside the function for better performance)
     $default_quotes = array(
@@ -122,16 +123,6 @@ function import_demo_quotes() {
 
     // Display a success message
     echo '<div class="updated"><p>Demo quotes imported successfully.</p></div>';
-    ?>
-    <button onclick="importDemoQuotes()">Import Demo Quotes</button>
-    <script>
-      function importDemoQuotes() {
-        // Use AJAX or post request to call the function (optional)
-        // Here, we trigger the function directly for simplicity
-        import_demo_quotes();
-      }
-    </script>
-    <?php
 }
 
 // Function to add sub-tab for settings page
@@ -142,7 +133,7 @@ function random_quote_footer_settings() {
         <h2 class="nav-tab-wrapper">
             <a href="?page=random-quote-footer-settings" class="nav-tab nav-tab-active">General Settings</a>
             <a href="?page=random-quote-footer-settings&tab=subtab1" class="nav-tab">Manage Quotes</a>
-            <a href="?page=random-quote-footer-settings&tab=import-demo-quotes" class="nav-tab">Import Demo Quotes</a>
+            <a href="?page=random-quote-footer-settings&tab=import-export-quotes" class="nav-tab">Import/Export Quotes</a>
         </h2>
         <?php
         // Check for the current tab
@@ -153,6 +144,8 @@ function random_quote_footer_settings() {
             random_quote_sub_tab_1_content(); // Call function to display Sub Tab 1 content
         } elseif ($current_tab === 'subtab2') {
             echo '<h2>Sub Tab 2 Content</h2>';
+        } elseif ($current_tab === 'import-export-quotes') {
+            import_export_quotes_content(); // Call function to display Import/Export Quotes content
         } else {
             ?>
             <form method="post" action="options.php">
@@ -169,7 +162,6 @@ function random_quote_footer_settings() {
                 </table>
                 <h3>Shortcodes</h3>
                 <p>Use These shortcodes to add Quotes to your site</p>
-                
                 <table>
                     <th scope="row">Static Display</th>
                     <code>[random_quote]</code>
@@ -192,7 +184,29 @@ function random_quote_footer_settings() {
 function random_quote_sub_tab_1_content() {
     ?>
     <h2>Manage Quotes</h2>
+    <!-- Button to trigger popup -->
+    <button id="addNewQuoteBtn" class="button">Add New Quote</button>
+
+    <!-- Popup for adding new quote -->
+    <div id="addNewQuotePopup" style="display: none;">
+        <!-- WYSIWYG editor for quote -->
+        <?php
+        $content = '';
+        $editor_id = 'newQuoteEditor';
+        $settings = array(
+            'textarea_name' => 'new_quote',
+            'media_buttons' => false,
+            'quicktags'     => false,
+            'teeny'         => true,
+        );
+        wp_editor( $content, $editor_id, $settings );
+        ?>
+        <button id="saveNewQuoteBtn" class="button-primary">Save Quote</button>
+    </div>
+
+    <!-- Existing quotes table -->
     <table class="widefat">
+        <!-- Table headers -->
         <thead>
             <tr>
                 <th>ID</th>
@@ -200,6 +214,7 @@ function random_quote_sub_tab_1_content() {
                 <th>Action</th>
             </tr>
         </thead>
+        <!-- Table body to display existing quotes -->
         <tbody>
             <?php
             // Get all quotes
@@ -212,6 +227,7 @@ function random_quote_sub_tab_1_content() {
                     <td><?php echo $quote['id']; ?></td>
                     <td><?php echo $quote['quote']; ?></td>
                     <td>
+                        <!-- Edit and delete actions -->
                         <a href="?page=random-quote-footer-settings&tab=subtab1&action=edit&id=<?php echo $quote['id']; ?>">Edit</a> |
                         <a href="?page=random-quote-footer-settings&tab=subtab1&action=delete&id=<?php echo $quote['id']; ?>">Delete</a>
                     </td>
@@ -222,17 +238,23 @@ function random_quote_sub_tab_1_content() {
         </tbody>
     </table>
 
-    <h2>Add New Quote</h2>
-    <form method="post" action="?page=random-quote-footer-settings&tab=subtab1">
-        <input type="hidden" name="action" value="add">
-        <table class="form-table">
-            <tr>
-                <th scope="row">New Quote</th>
-                <td><textarea name="new_quote"></textarea></td>
-            </tr>
-        </table>
-        <?php submit_button('Add New Quote'); ?>
-    </form>
+    <!-- JavaScript to handle popup functionality -->
+    <script>
+        // Show popup when Add New Quote button is clicked
+        document.getElementById('addNewQuoteBtn').addEventListener('click', function() {
+            document.getElementById('addNewQuotePopup').style.display = 'block';
+        });
+
+        // Hide popup when Save Quote button is clicked
+        document.getElementById('saveNewQuoteBtn').addEventListener('click', function() {
+            // Get the quote text from the WYSIWYG editor
+            var newQuote = document.getElementById('newQuoteEditor').value;
+            // You can now save the new quote using AJAX or any other method
+            // For simplicity, this example does not include the saving logic
+            // After saving, you may want to reload the quotes table to display the updated list
+            document.getElementById('addNewQuotePopup').style.display = 'none';
+        });
+    </script>
     <?php
 }
 
@@ -301,5 +323,73 @@ function random_quote_footer_register_settings() {
 }
 add_action('admin_init', 'random_quote_footer_register_settings');
 
-// Activation Hook
-register_activation_hook(__FILE__, 'random_quote_plugin_activation');
+// Function to display content for Import/Export Quotes tab
+function import_export_quotes_content() {
+    ?>
+    <h2>Import/Export Quotes</h2>
+    <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" enctype="multipart/form-data">
+        <input type="hidden" name="action" value="import_quotes">
+        <h3>Import Quotes</h3>
+        <p>Select a CSV file containing quotes to import:</p>
+        <input type="file" name="quote_csv_file">
+        <?php submit_button('Import Quotes'); ?>
+    </form>
+    <br>
+    <form method="post" action="<?php echo admin_url('admin-post.php'); ?>">
+        <input type="hidden" name="action" value="export_quotes">
+        <h3>Export Quotes</h3>
+        <p>Export all existing quotes to a CSV file:</p>
+        <?php submit_button('Export Quotes'); ?>
+    </form>
+    <br>
+    <form method="post" action="<?php echo admin_url('admin-post.php'); ?>">
+        <input type="hidden" name="action" value="import_demo_quotes">
+        <h3>Import Demo Quotes</h3>
+        <p>Click below to import demo quotes:</p>
+        <button type="submit" name="import_demo_quotes" class="button">Import Demo Quotes</button>
+    </form>
+    <?php
+}
+
+// Function to handle CSV import
+function import_quotes_handler() {
+    if (isset($_FILES['quote_csv_file']) && !empty($_FILES['quote_csv_file']['name'])) {
+        $file = $_FILES['quote_csv_file'];
+        $csv = array_map('str_getcsv', file($file['tmp_name']));
+        $quotes = array();
+        foreach ($csv as $line) {
+            if (isset($line[0])) {
+                $quotes[] = array('quote' => $line[0]);
+            }
+        }
+        // Merge with existing quotes (optional)
+        $existing_quotes = get_option('random_quotes', array());
+        $quotes = array_merge($existing_quotes, $quotes);
+        // Update the option with the combined quotes
+        update_option('random_quotes', $quotes);
+        echo '<div class="updated"><p>Quotes imported successfully.</p></div>';
+    }
+    wp_redirect(admin_url('admin.php?page=random-quote-footer-settings&tab=import-export-quotes'));
+    exit;
+}
+
+// Function to handle CSV export
+function export_quotes_handler() {
+    $quotes = get_all_quotes();
+    $file = fopen('quotes.csv', 'w');
+    foreach ($quotes as $quote) {
+        fputcsv($file, array($quote['quote']));
+    }
+    fclose($file);
+    // Force file download
+    header('Content-Description: File Transfer');
+    header('Content-Disposition: attachment; filename=quotes.csv');
+    header('Content-Type: application/csv; charset=UTF-8');
+    readfile('quotes.csv');
+    exit;
+}
+
+// Hook into admin-post for handling import and export actions
+add_action('admin_post_import_quotes', 'import_quotes_handler');
+add_action('admin_post_export_quotes', 'export_quotes_handler');
+
